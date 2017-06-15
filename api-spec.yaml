@@ -1,0 +1,134 @@
+consumes:
+- application/json
+info:
+  description: Column - Ansible as a service
+  title: Column
+  version: 0.0.1
+  contact:
+    website: "https://github.com/vmware/column"
+  license:
+    name: "BSD-2"
+    url: "https://github.com/vmware/column/blob/master/LICENSE"
+produces:
+- application/json
+swagger: "2.0"
+schemes:
+- http
+basePath: /v1
+paths:
+  /tasks:
+    post:
+      summary: "Create new task that will execute Ansible playbook"
+      description: ""
+      operationId: "createTask"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Task object that will describe execution context"
+        required: true
+        schema:
+          $ref: "#/definitions/TaskPayload"
+      responses:
+        202:
+          description: "Task started successfully"
+          schema:
+            $ref: "#/definitions/Task"
+        403:
+          description: "Access forbidden"
+          schema:
+            $ref: "#/definitions/AccessError"
+        default:
+          description: generic error
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      summary: "Get all tasks in the system"
+      description: ""
+      operationId: "getTasks"
+      responses:
+        200:
+          description: "Returns list of Tasks"
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Task"
+        403:
+          description: "Access forbidden"
+          schema:
+            $ref: "#/definitions/AccessError"
+        default:
+          description: generic error
+          schema:
+            $ref: "#/definitions/Error"
+  /tasks/{taskId}:
+    get:
+      summary: "Retrieve Task by its ID"
+      description: "Returns single task given its ID"
+      operationID: "getTaskByID"
+      parameters:
+      - name: "taskId"
+        in: "path"
+        description: "ID of task to return"
+        required: true
+        type: "string"
+        format: "uuid"
+      responses:
+        200:
+          description: "Successful retrieval of Task"
+          schema:
+            $ref: "#/definitions/Task"
+        404:
+          description: "Task does not exist"
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: generic error
+          schema:
+            $ref: "#/definitions/Error"
+definitions:
+  TaskPayload:
+    type: "object"
+    properties:
+      playbook_path:
+        type: "string"
+      inventory:
+        type: "string"
+      options:
+        type: "object"
+        $ref: '#/definitions/Options'
+      extra_vars:
+        type: "object"
+  Task:
+    allOf:
+    - $ref: '#/definitions/TaskPayload'
+    - type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        state:
+          type: "string"
+          enum:
+            - running
+            - finished
+            - error
+            - retrying
+
+  Options:
+    type: "object"
+    properties:
+      become_user:
+        type: string
+      private_key_file:
+        type: string
+      tags:
+        type: array
+      skip_tags:
+        type: array
+      susbset:
+        type: string
+      connection:
+        type: string
+
+      become_method:
+        type: string
